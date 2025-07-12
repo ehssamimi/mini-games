@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -17,69 +19,111 @@ class Game1Page extends StatelessWidget {
 
 class SymmetryGame extends FlameGame {
   late Vector2 centerPosition;
-  late CircleComponent baseCircle;
 
   @override
   Future<void> onLoad() async {
-    // موقعیت مرکزی
+    // برای فعال کردن DragCallbacks
+    children.register<DragCallbacks>();
+
+    // موقعیت نیم‌دایره اصلی
     centerPosition = Vector2(size.x / 2, size.y / 3);
 
-    // نیم‌دایره اصلی (دایره کامل با پوشش ظاهری نصفه)
-    baseCircle = CircleComponent(
-      radius: 50,
-      position: centerPosition,
-      anchor: Anchor.center,
-      paint: Paint()..color = Colors.red,
+    // نیم‌دایره اصلی (قرینه بالا)
+    final mainArc = ArcComponent(
+      startAngle: -pi / 2,
+      sweepAngle: pi,
+      color: Colors.red,
+      isCorrect: false,
+      startPosition: centerPosition,
+      targetPosition: centerPosition,
     );
+    add(mainArc);
 
-    add(baseCircle);
-
-    // ساخت گزینه‌ها
+    // گزینه‌های پایین صفحه
     final options = [
-      false, // نیم‌دایره مشابه (غلط)
-      false, // 1/4 دایره (غلط)
-      false, // دایره کامل (غلط)
-      true,  // نیم‌دایره قرینه (درست)
+      ArcComponent( // نیم‌دایره مشابه
+        startAngle: -pi / 2,
+        sweepAngle: pi,
+        color: Colors.orange,
+        isCorrect: false,
+        startPosition: Vector2(80, size.y - 100),
+        targetPosition: centerPosition,
+      ),
+      ArcComponent( // ربع‌دایره
+        startAngle: -pi / 2,
+        sweepAngle: pi / 2,
+        color: Colors.green,
+        isCorrect: false,
+        startPosition: Vector2(160, size.y - 100),
+        targetPosition: centerPosition,
+      ),
+      ArcComponent( // دایره کامل
+        startAngle: 0,
+        sweepAngle: 2 * pi,
+        color: Colors.blue,
+        isCorrect: false,
+        startPosition: Vector2(240, size.y - 100),
+        targetPosition: centerPosition,
+      ),
+      ArcComponent( // نیم‌دایره قرینه (جواب درست)
+        startAngle: pi / 2,
+        sweepAngle: pi,
+        color: Colors.orange,
+        isCorrect: true,
+        startPosition: Vector2(320, size.y - 100),
+        targetPosition: centerPosition,
+      ),
     ];
 
-    for (int i = 0; i < options.length; i++) {
-      final option = DraggableOption(
-        isCorrect: options[i],
-        paint: Paint()..color = Colors.orange,
-        startPosition: Vector2(80 + i * 90, size.y - 100),
-        targetPosition: centerPosition,
-      );
-      add(option);
-    }
+    addAll(options);
   }
 }
 
-class DraggableOption extends CircleComponent
+class ArcComponent extends PositionComponent
     with DragCallbacks, HasGameRef<SymmetryGame> {
+  final double startAngle;
+  final double sweepAngle;
   final bool isCorrect;
   final Vector2 startPosition;
   final Vector2 targetPosition;
+  final Color color;
 
-  late Vector2 dragDelta;
+  late Paint _paint;
 
-  DraggableOption({
+  ArcComponent({
+    required this.startAngle,
+    required this.sweepAngle,
+    required this.color,
     required this.isCorrect,
-    required Paint paint,
     required this.startPosition,
     required this.targetPosition,
-  }) : super(
-    radius: 30,
-    position: startPosition.clone(),
-    anchor: Anchor.center,
-    paint: paint,
-  );
+  }) {
+    size = Vector2.all(60);
+    position = startPosition.clone();
+    anchor = Anchor.center;
+    priority = 10;
+    _paint = Paint()..color = color;
+  }
 
   @override
-  bool containsLocalPoint(Vector2 point) => true;
+  Future<void> onLoad() async {
+    await super.onLoad();
+    add(RectangleHitbox()); // برای فعال کردن تعامل لمسی و درگ
+  }
 
   @override
-  void onDragStart(DragStartEvent event) {
-    dragDelta = event.localPosition;
+  bool containsLocalPoint(Vector2 point) {
+    return toRect().contains(point.toOffset());
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    final rect = Rect.fromCircle(
+      center: Offset(size.x / 2, size.y / 2),
+      radius: size.x / 2,
+    );
+    canvas.drawArc(rect, startAngle, sweepAngle, true, _paint);
   }
 
   @override
@@ -90,14 +134,13 @@ class DraggableOption extends CircleComponent
   @override
   void onDragEnd(DragEndEvent event) {
     final distance = position.distanceTo(targetPosition);
-
     if (distance < 60) {
       if (isCorrect) {
         position = targetPosition.clone() + Vector2(50, 0);
-        print("✅ جواب درست بود!");
+        print("✅ درست بود!");
       } else {
         position = startPosition.clone();
-        print("❌ گزینه اشتباه بود!");
+        print("❌ اشتباه بود!");
       }
     } else {
       position = startPosition.clone();
