@@ -1,13 +1,19 @@
+import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
+import 'package:mini_games/components/game2/bird.dart';
 
-class MyFlameGame2 extends FlameGame {
+class MyFlameGame2 extends FlameGame with TapDetector{
+
+  late Bird bird;
+
+
   @override
-  void render(Canvas canvas) {
-    canvas.drawRect(Rect.fromLTWH(50, 50, 100, 100), Paint()..color = Colors.green);
+  void onTap() {
+    // TODO: implement onTap
+    super.onTap();
+    bird.flap();
   }
-  @override
-  void update(double dt) {}
 }
 
 class Game2Page extends StatelessWidget {

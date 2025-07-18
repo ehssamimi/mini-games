@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mini_games/games/game1.dart';
 import 'package:mini_games/games/game2.dart';
+import 'package:mini_games/games/game3.dart';
 
 
 void main() {
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const MainMenuPage(),
         '/game1': (context) => const Game1Page(),
         '/game2': (context) => const Game2Page(),
+        '/game3': (context) =>  Game3Page(),
       },
       theme: ThemeData.dark(),
     );
@@ -46,6 +48,13 @@ class MainMenuPage extends StatelessWidget {
               child: const Text(' game2'),
               onPressed: () {
                 Navigator.pushNamed(context, '/game2');
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              child: const Text(' game3'),
+              onPressed: () {
+                Navigator.pushNamed(context, '/game3');
               },
             ),
           ],
