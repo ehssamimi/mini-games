@@ -2,6 +2,9 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_games/bloc/gameStates/gameCubit.dart';
+import 'package:mini_games/bloc/gameStates/gameState.dart';
 import 'package:mini_games/components/game2/bird.dart';
 import 'package:mini_games/components/game3/AlertOverlay.dart';
 import 'package:mini_games/components/game3/centerTarget.dart';
@@ -20,6 +23,9 @@ class game3 extends FlameGame with HasGameReference{
     required this.CenterImage,
     required this.side,
     required this.correctIndex,
+     required this.onLoseHp,
+    required this.onWin,
+    required this.onNextLevel,
   }) : super() {}
 
   final List<String> Options;
@@ -27,6 +33,9 @@ class game3 extends FlameGame with HasGameReference{
   final StickSide side;
   final int correctIndex;
 
+  final void Function()? onNextLevel; // این خط رو اضافه کن
+  final VoidCallback? onLoseHp; // این خط رو اضافه کن
+  final VoidCallback? onWin; // این خط رو اضافه کن
 
 // برای نمایش پیام موفقیت و شکست
   bool? isLastAnswerCorrect;
@@ -45,7 +54,14 @@ class game3 extends FlameGame with HasGameReference{
     overlays.add('alert');
   }
   void nextLevel() {
-    // اینجا منطقش رو می‌نویسی
+    onWin!();
+
+    if (onNextLevel != null) {
+      onNextLevel!();
+    }
+  }
+  void loseHearth() {
+    onLoseHp!();
   }
   void restartLevel() {
     // اینجا هم ریست
@@ -71,9 +87,9 @@ class game3 extends FlameGame with HasGameReference{
     final total = Options.length;
     for (int i = 0; i < total; i++) {
       add(DraggableApple(
-        index: i,
-        total: total,
-        spritePath: Options[i],
+          index: i,
+          total: total,
+          spritePath: Options[i],
           correctIndex:correctIndex,
           side: side
       ));
@@ -109,27 +125,154 @@ class game3 extends FlameGame with HasGameReference{
 
 }
 
-class Game3Page extends StatelessWidget {
+class Game3Page extends StatefulWidget {
+  Game3Page({super.key});
+
+  @override
+  State<Game3Page> createState() => _Game3PageState();
+}
+
+class _Game3PageState extends State<Game3Page> {
+
+  int currentLevelIndex = 0;
+  final List<GameLevel> allGame3Levels = [
+    GameLevel(
+      options: ['1.png', '2.png', '3.png', '4.png'],
+      side: StickSide.right,
+      centerImage: '1.png',
+      correctIndex: 0,
+    ),
+    GameLevel(
+      options: ['5.png', '6.png', '7.png', '8.png'],
+      side: StickSide.right,
+      centerImage: '6.png',
+      correctIndex: 1,
+    ),
+    GameLevel(
+      options: ['9.png', '10.png', '11.png', '12.png'],
+      side: StickSide.right,
+      centerImage: '10.png',
+      correctIndex: 1,
+    ),    GameLevel(
+      options: ['13.png', '14.png', '15.png', '16.png'],
+      side: StickSide.right,
+      centerImage: '14.png',
+      correctIndex: 1,
+    ),    GameLevel(
+      options: ['17.png', '18.png', '19.png', '20.png'],
+      side: StickSide.right,
+      centerImage: '18.png',
+      correctIndex: 1,
+    ),    GameLevel(
+      options: ['21.png', '22.png', '23.png', '24.png'],
+      side: StickSide.right,
+      centerImage: '22.png',
+      correctIndex: 1,
+    ),    GameLevel(
+      options: ['25.png', '26.png', '27.png', '28.png'],
+      side: StickSide.right,
+      centerImage: '26.png',
+      correctIndex: 1,
+    ),    GameLevel(
+      options: ['29.png', '30.png', '31.png', '32.png'],
+      side: StickSide.right,
+      centerImage: '30.png',
+      correctIndex: 1,
+    ),    GameLevel(
+      options: ['33.png', '34.png', '35.png', '36.png'],
+      side: StickSide.right,
+      centerImage: '34.png',
+      correctIndex: 1,
+    ),    GameLevel(
+      options: ['37.png', '38.png', '39.png', '40.png'],
+      side: StickSide.right,
+      centerImage: '38.png',
+      correctIndex: 1,
+    ),
+   ];
 
 
+  void nextLevel() {
+    setState(() {
+      if (currentLevelIndex < allGame3Levels.length - 1) {
+        currentLevelIndex++;
+      } else {
+        // بازی تموم شده یا به مرحله اول برو
+        currentLevelIndex = 0;
+      }
+    });
+  }
 
-    Game3Page({super.key});
 
-  final List<String> Options = [
-    '2.png',
-    '4.png',
-    '6.png',
-    '8.png',
-  ];
   @override
   Widget build(BuildContext context) {
+    final level = allGame3Levels[currentLevelIndex];
+
+
     return Scaffold(
-      appBar: AppBar(title: const Text('game2')),
-      body: GameWidget(game: game3(
-          Options:Options, side: StickSide.right, CenterImage: Options[3],correctIndex:3),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent, // فقط یک بار
+        elevation: 0,
+        title: BlocBuilder<GameCubit, GameState>(
+          builder: (context, state) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // سمت چپ XP
+              Row(
+                children: [
+                  Icon(Icons.star, color: Colors.amber), // یا عکس خاص XP
+                  SizedBox(width: 4),
+                  Text('${state.xp} XP'),
+                ],
+              ),
+              // وسط: مرحله
+              Text('مرحله ${state.currentLevel + 1}'),
+              // سمت راست: جان‌ها (قلب‌ها)
+              Row(
+                children: List.generate(4, (index) {
+                  return Icon(
+                    Icons.favorite,
+                    color: index < state.hp ? Colors.red : Colors.grey,
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+        // به جای title خودت Row بزاری اوکیه
+        automaticallyImplyLeading: false,
+
+      ),
+      body: GameWidget(
+        game: game3(
+          Options: level.options,
+          side: level.side,
+          CenterImage: level.centerImage,
+          correctIndex: level.correctIndex,
+          // مطمئن شو این پارامتر را داری!
+          onNextLevel: nextLevel,
+          onLoseHp: () => context.read<GameCubit>().loseHp(),
+          onWin: () => context.read<GameCubit>().winLevel(),
+
+        ),
         overlayBuilderMap: {
-        'alert': (context, game) => AlertOverlay(game: game as game3), // اسم کلاس بازی!
-      },),
+          'alert': (context, game) => AlertOverlay(game: game as game3), // اسم کلاس بازی!
+        },),
     );
   }
+}
+
+
+class GameLevel {
+  final List<String> options;
+  final StickSide side;
+  final String centerImage;
+  final int correctIndex;
+
+  GameLevel({
+    required this.options,
+    required this.side,
+    required this.centerImage,
+    required this.correctIndex,
+  });
 }

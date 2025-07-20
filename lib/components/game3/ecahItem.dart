@@ -115,7 +115,7 @@ class DraggableApple extends SpriteComponent with HasGameReference<game3>, DragC
             game.enableDrag();
 
             // ریست یا ری‌استارت مرحله جاری مثلاً:
-            game.restartLevel();
+            game.loseHearth();
           },
         );      }
     } else {

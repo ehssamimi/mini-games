@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_games/bloc/gameStates/gameCubit.dart';
 import 'package:mini_games/games/game1.dart';
 import 'package:mini_games/games/game2.dart';
 import 'package:mini_games/games/game3.dart';
 
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    BlocProvider<GameCubit>(
+      create: (_) => GameCubit(),
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
