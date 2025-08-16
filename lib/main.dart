@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mini_games/bloc/gameStates/game2/MultiplicationBloc.dart';
+import 'package:mini_games/bloc/gameStates/game2/MultiplicationEvent.dart';
 import 'package:mini_games/bloc/gameStates/gameCubit.dart';
+import 'package:mini_games/bloc/gameStates/gameState.dart';
 import 'package:mini_games/games/game1.dart';
 import 'package:mini_games/games/game2.dart';
 import 'package:mini_games/games/game3.dart';
@@ -26,7 +29,10 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const MainMenuPage(),
         '/game1': (context) => const Game1Page(),
-        '/game2': (context) => const Game2Page(),
+        '/game2': (context) => BlocProvider(
+          create: (context) => MultiplicationBloc()..add(GenerateQuestion()),
+          child: const MultiplicationGamePage(),
+        ),
         '/game3': (context) =>  Game3Page(),
       },
       theme: ThemeData.dark(),
@@ -41,30 +47,42 @@ class MainMenuPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text(' main page')),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              child: const Text(' game1'),
-              onPressed: () {
-                Navigator.pushNamed(context, '/game1');
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              child: const Text(' game2'),
-              onPressed: () {
-                Navigator.pushNamed(context, '/game2');
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              child: const Text(' game3'),
-              onPressed: () {
-                Navigator.pushNamed(context, '/game3');
-              },
-            ),
-          ],
+        child: BlocBuilder<GameCubit, GameState>(
+          builder: (context, state) {
+            bool isDisabled = state.hp == 0;
+
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: isDisabled
+                      ? null
+                      : () {
+                    Navigator.pushNamed(context, '/game1');
+                  },
+                  child: const Text(' game1'),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: isDisabled
+                      ? null
+                      : () {
+                    Navigator.pushNamed(context, '/game2');
+                  },
+                  child: const Text(' game2'),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: isDisabled
+                        ? null
+                        : () {
+                      Navigator.pushNamed(context, '/game3');
+                    },
+                  child: const Text(' game3'),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

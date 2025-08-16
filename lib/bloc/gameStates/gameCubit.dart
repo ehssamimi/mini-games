@@ -5,8 +5,13 @@ class GameCubit extends Cubit<GameState> {
   GameCubit() : super(GameState(hp: 4, xp: 0, currentLevel: 0));
 
   void loseHp() {
-    if (state.hp > 0) emit(state.copyWith(hp: state.hp - 1));
-  }
+    if (state.hp > 1) {
+      emit(state.copyWith(hp: state.hp - 1));
+    } else {
+      // HP میشه صفر
+      emit(state.copyWith(hp: 0));
+      // می‌تونی یک استیت خاص برای Game Over داشته باشی (اختیاری)
+    }  }
 
   void winLevel() {
     emit(

@@ -33,10 +33,9 @@ class game3 extends FlameGame with HasGameReference{
   final StickSide side;
   final int correctIndex;
 
-  final void Function()? onNextLevel; // این خط رو اضافه کن
-  final VoidCallback? onLoseHp; // این خط رو اضافه کن
-  final VoidCallback? onWin; // این خط رو اضافه کن
-
+  final void Function()? onNextLevel;
+  final VoidCallback? onLoseHp;
+  final VoidCallback? onWin;
 // برای نمایش پیام موفقیت و شکست
   bool? isLastAnswerCorrect;
   VoidCallback? onAlertButtonPressed;
@@ -208,58 +207,100 @@ class _Game3PageState extends State<Game3Page> {
   Widget build(BuildContext context) {
     final level = allGame3Levels[currentLevelIndex];
 
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent, // فقط یک بار
-        elevation: 0,
-        title: BlocBuilder<GameCubit, GameState>(
-          builder: (context, state) => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // سمت چپ XP
-              Row(
+    return BlocListener<GameCubit, GameState>(
+      listenWhen: (previous, current) => previous.hp != current.hp,
+      listener: (context, state) {
+        if (state.hp == 0) {
+          showModalBottomSheet(
+            context: context,
+            isDismissible: false,
+            enableDrag: false,
+            backgroundColor: Colors.black87,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            builder: (context) => Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.star, color: Colors.amber), // یا عکس خاص XP
-                  SizedBox(width: 4),
-                  Text('${state.xp} XP'),
+                  Icon(Icons.sentiment_dissatisfied, color: Colors.red, size: 48),
+                  SizedBox(height: 16),
+                  Text(
+                    'بازی تموم شد!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                  ),
+                  SizedBox(height: 8),
+                  Text('شما همه جان‌های خود را از دست دادید.'),
+                  SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context)
+                          ..pop()
+                          ..pushNamedAndRemoveUntil('/', (route) => false);
+                      },
+                      icon: Icon(Icons.home),
+                      label: Text('بازگشت به صفحه اصلی'),
+                    ),
+                  ),
                 ],
               ),
-              // وسط: مرحله
-              Text('مرحله ${state.currentLevel + 1}'),
-              // سمت راست: جان‌ها (قلب‌ها)
-              Row(
-                children: List.generate(4, (index) {
-                  return Icon(
-                    Icons.favorite,
-                    color: index < state.hp ? Colors.red : Colors.grey,
-                  );
-                }),
-              ),
-            ],
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: BlocBuilder<GameCubit, GameState>(
+            builder: (context, state) => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // XP سمت چپ
+                Row(
+                  children: [
+                    Icon(Icons.star, color: Colors.amber),
+                    SizedBox(width: 4),
+                    Text('${state.xp} XP'),
+                  ],
+                ),
+                // مرحله وسط
+                Text('مرحله ${currentLevelIndex +1}'),
+                // جان‌ها سمت راست
+                Row(
+                  children: List.generate(4, (index) {
+                    return Icon(
+                      Icons.favorite,
+                      color: index < state.hp ? Colors.red : Colors.grey,
+                    );
+                  }),
+                ),
+              ],
+            ),
           ),
+          automaticallyImplyLeading: false,
         ),
-        // به جای title خودت Row بزاری اوکیه
-        automaticallyImplyLeading: false,
-
+        body: GameWidget(
+          game: game3(
+            Options: level.options,
+            side: level.side,
+            CenterImage: level.centerImage,
+            correctIndex: level.correctIndex,
+            onNextLevel: nextLevel,
+            onLoseHp: () => context.read<GameCubit>().loseHp(),
+            onWin: () => context.read<GameCubit>().winLevel(),
+          ),
+          overlayBuilderMap: {
+            'alert': (context, game) => AlertOverlay(game: game as game3),
+          },
+        ),
       ),
-      body: GameWidget(
-        game: game3(
-          Options: level.options,
-          side: level.side,
-          CenterImage: level.centerImage,
-          correctIndex: level.correctIndex,
-          // مطمئن شو این پارامتر را داری!
-          onNextLevel: nextLevel,
-          onLoseHp: () => context.read<GameCubit>().loseHp(),
-          onWin: () => context.read<GameCubit>().winLevel(),
-
-        ),
-        overlayBuilderMap: {
-          'alert': (context, game) => AlertOverlay(game: game as game3), // اسم کلاس بازی!
-        },),
     );
   }
+
 }
 
 
